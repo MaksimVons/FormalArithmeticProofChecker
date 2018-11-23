@@ -35,8 +35,9 @@ public class Binary implements Expression {
     @Override
     public Set<Var> getFreeVars(Set<Var> linkedVars) {
         if (type == Type.FORALL || type == Type.EXISTS) {
-            linkedVars.add((Var) l);
-            return r.getFreeVars(linkedVars);
+            Set<Var> thisLinkedVars = new HashSet<>(linkedVars);
+            thisLinkedVars.add((Var) l);
+            return r.getFreeVars(thisLinkedVars);
         }
         Set<Var> freeVars = l.getFreeVars(linkedVars);
         freeVars.addAll(r.getFreeVars(linkedVars));

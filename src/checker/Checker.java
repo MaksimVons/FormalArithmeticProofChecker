@@ -5,5 +5,5 @@ import expression.Expression;
 import java.util.Set;
 
 public interface Checker {
-    CheckResult check(Set<Expression> assumptions, Expression expr);
+    CheckResult check(Set<Expression> assumptions, Expression expr, boolean alreadyProved);
 }

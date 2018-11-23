@@ -8,14 +8,22 @@ import java.util.List;
 import static expression.Type.*;
 
 public class Parser {
-    private int parseInd = 0;
-    private int ind = 0;
+    private int parseInd;
+    private int ind;
     private List<Token> tokens;
 
-    public Expression parse(String line, boolean reset) {
-        if (tokens == null || reset) {
+    public Expression parse(String line) {
+        String str = line.replaceAll("\\s+", "");
+        parseInd = 0;
+        ind = 0;
+        tokens = getTokensFromLine(str);
+        if (tokens.isEmpty()) return null;
+        return getImpl();
+    }
+
+    public Expression parse(String line, boolean getNextAssumption) {
+        if (tokens == null || !getNextAssumption) {
             String str = line.replaceAll("\\s+", "");
-            ///str = "(" + str + ")";
             parseInd = 0;
             ind = 0;
             tokens = getTokensFromLine(str);

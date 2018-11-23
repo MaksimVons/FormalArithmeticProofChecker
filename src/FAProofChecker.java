@@ -17,30 +17,29 @@ public class FAProofChecker {
 
             String firstLine[] = in.readLine().split("\\|-");
 
+            Parser parser = new Parser();
             Set<Expression> assumptions = new HashSet<>();
-            Parser assumptionsParser = new Parser();
-            Expression assumption = assumptionsParser.parse(firstLine[0], false);
+            Expression assumption = parser.parse(firstLine[0], true);
             while (assumption != null) {
                 assumptions.add(assumption);
-                assumption = assumptionsParser.parse(firstLine[0], false);
+                assumption = parser.parse(firstLine[0], true);
             }
 
-            Expression toProve = new Parser().parse(firstLine[1], false);
+            Expression toProve = parser.parse(firstLine[1]);
             List<Checker> checkers = new ArrayList<>();
             checkers.add(new AssumptionsChecker());
             checkers.add(new AxiomsChecker());
             checkers.add(new DerivationRulesChecker());
 
-            Parser parser = new Parser();
             String line = in.readLine();
             Expression expr = null;
             int ind = 1;
             while (line != null) {
                 if (!line.replaceAll("\\s+", "").isEmpty()) {
-                    expr = parser.parse(line, true);
-                    CheckResult res = new CheckResult(false, "");
+                    expr = parser.parse(line);
+                    CheckResult res = new CheckResult(false);
                     for (Checker checker : checkers) {
-                        CheckResult r = checker.check(assumptions, expr);
+                        CheckResult r = checker.check(assumptions, expr, res.result);
                         if (r.result)
                             res = r;
                         if (!res.result && !r.error.isEmpty())
@@ -58,8 +57,7 @@ public class FAProofChecker {
                 }
                 line = in.readLine();
             }
-            if(!expr.equals(toProve))
-            {
+            if (!expr.equals(toProve)) {
                 out.write("Последнее выражение не совпадает с тем, которое надо доказать.");
                 return;
             }

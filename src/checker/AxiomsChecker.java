@@ -34,22 +34,25 @@ public class AxiomsChecker implements Checker {
     private static List<Expression> FAAxioms;
 
     static {
+        Parser parser = new Parser();
         classicAxioms = new ArrayList<>();
         for (String expr : classicAxiomsStrings) {
-            classicAxioms.add(new Parser().parse(expr, false));
+            classicAxioms.add(parser.parse(expr));
         }
 
         FAAxioms = new ArrayList<>();
         for (String expr : FAAxiomsStrings) {
-            FAAxioms.add(new Parser().parse(expr, false));
+            FAAxioms.add(parser.parse(expr));
         }
     }
 
     @Override
-    public CheckResult check(Set<Expression> assumptions, Expression expr) {
+    public CheckResult check(Set<Expression> assumptions, Expression expr, boolean alreadyProved) {
+        if (alreadyProved) return new CheckResult(false);
+
         for (Expression axiom : classicAxioms) {
             if (checkAxiom(expr, axiom, new HashMap<>()))
-                return new CheckResult(true, "");
+                return new CheckResult(true);
         }
 
         CheckResult res = null;
@@ -65,10 +68,10 @@ public class AxiomsChecker implements Checker {
                 HashMap<Expression, Expression> map = new HashMap<>();
                 if (checkAxiom(right, left.r, map)) {
                     if (!map.containsKey(var))
-                        return new CheckResult(true, "");
+                        return new CheckResult(true);
                     Expression theta = map.get(var);
                     if (left.r.areVarsFreeInPlaceOf(new HashSet<>(), theta.getFreeVars(new HashSet<>()), var)) {
-                        return new CheckResult(true, "");
+                        return new CheckResult(true);
                     }
                     res = new CheckResult(false, "терм " + theta.toString()
                             + " не свободен для подстановки в формулу " + left.r.toString()
@@ -88,10 +91,10 @@ public class AxiomsChecker implements Checker {
                 HashMap<Expression, Expression> map = new HashMap<>();
                 if (checkAxiom(left, right.r, map)) {
                     if (!map.containsKey(var))
-                        return new CheckResult(true, "");
+                        return new CheckResult(true);
                     Expression theta = map.get(var);
                     if (right.r.areVarsFreeInPlaceOf(new HashSet<>(), theta.getFreeVars(new HashSet<>()), var)) {
-                        return new CheckResult(true, "");
+                        return new CheckResult(true);
                     }
                     res = new CheckResult(false, "терм " + theta.toString()
                             + " не свободен для подстановки в формулу " + right.r.toString()
@@ -102,7 +105,7 @@ public class AxiomsChecker implements Checker {
 
         for (Expression axiom : FAAxioms) {
             if (axiom.equals(expr))
-                return new CheckResult(true, "");
+                return new CheckResult(true);
         }
 
         // FA axiom 9 : (ψ[x := 0]) & ∀x((ψ) → (ψ)[x := x']) → (ψ) and x is in free vars of ψ
@@ -116,8 +119,9 @@ public class AxiomsChecker implements Checker {
                     Var var = (Var) ((Binary) r).l;
                     if (((Binary) r).r instanceof Binary && ((Binary) ((Binary) r).r).type == Type.IMPL) {
                         if (psi.equals(((Binary) ((Binary) r).r).l)) {
-                            if (psi.substitute(var, new Quote(var)).equals(((Binary) ((Binary) r).r).r)) {
-                                return new CheckResult(true, "");
+                            if (psi.substitute(var, new Quote(var)).equals(((Binary) ((Binary) r).r).r) &&
+                                    psi.substitute(var, new Zero()).equals(psi0)) {
+                                return new CheckResult(true);
                             }
                         }
                     }
@@ -126,7 +130,7 @@ public class AxiomsChecker implements Checker {
         }
 
         if (res != null) return res;
-        return new CheckResult(false, "");
+        return new CheckResult(false);
     }
 
     private boolean checkAxiom(Expression expr, Expression axiom, Map<Expression, Expression> varsInAxiom) {

@@ -13,7 +13,7 @@ public class DerivationRulesChecker implements Checker {
     Map<Expression, List<Expression>> MPForProoving = new HashMap<>();
 
     @Override
-    public CheckResult check(Set<Expression> assumptions, Expression expr) {
+    public CheckResult check(Set<Expression> assumptions, Expression expr, boolean alreadyProved) {
         expressions.add(expr);
         if (MPForProoving.containsKey(expr)) {
             List<Expression> proovedByMp = MPForProoving.get(expr);
@@ -37,9 +37,12 @@ public class DerivationRulesChecker implements Checker {
                 }
             }
         }
+
+        if (alreadyProved) return new CheckResult(false);
+
         if (MPProoved.contains(expr)) {
             expressions.add(expr);
-            return new CheckResult(true, "");
+            return new CheckResult(true);
         }
 
         if (expr instanceof Binary && ((Binary) expr).type == Type.IMPL) {
@@ -54,7 +57,7 @@ public class DerivationRulesChecker implements Checker {
                         return new CheckResult(false,
                                 "переменная " + x.name + " входит свободно в формулу " + phi.toString());
                     }
-                    return new CheckResult(true, "");
+                    return new CheckResult(true);
                 }
             }
             // (ψ) → (φ) |- ∃x(ψ) → (φ) if x not in freeVars of φ and assumptions
@@ -68,10 +71,10 @@ public class DerivationRulesChecker implements Checker {
                         return new CheckResult(false,
                                 "переменная " + x.name + " входит свободно в формулу " + phi.toString());
                     }
-                    return new CheckResult(true, "");
+                    return new CheckResult(true);
                 }
             }
         }
-        return new CheckResult(false, "");
+        return new CheckResult(false);
     }
 }
